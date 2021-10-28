@@ -1,0 +1,22 @@
+[package]
+name = "cargo-vendor-tools"
+version = "0.1.0"
+authors = ["Ömer Sinan Ağacan <omeragacan@gmail.com>"]
+edition = "2021"
+
+[[bin]]
+name = "cargo-compute-checksum"
+path = "src/compute_checksum.rs"
+
+[[bin]]
+name = "cargo-list-lock"
+path = "src/list_lock.rs"
+
+[[bin]]
+name = "cargo-merge-lock"
+path = "src/merge_lock.rs"
+
+[dependencies]
+clap = "2.33.3"
+sha2 = "0.9.5"
+toml = "0.5.8"
