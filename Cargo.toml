@@ -5,14 +5,6 @@ authors = ["Ömer Sinan Ağacan <omeragacan@gmail.com>"]
 edition = "2021"
 
 [[bin]]
-name = "cargo-compute-checksums"
-path = "src/compute_checksums.rs"
-
-[[bin]]
-name = "cargo-list-lock"
-path = "src/list_lock.rs"
-
-[[bin]]
 name = "vendor-compiler-deps"
 path = "src/vendor_compiler_deps.rs"
 
