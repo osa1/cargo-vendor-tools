@@ -1,7 +1,10 @@
 use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
 use clap::{App, Arg};
+use serde_json as json;
+use sha2::{Digest, Sha256};
 
 static DESCR: &str = "
 TODO
@@ -75,7 +78,7 @@ fn main() {
 
         let mut tar_cmd = Command::new("tar")
             .args(["xz"])
-            .current_dir(&package_vendor_dir)
+            .current_dir(&vendor_dir)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -95,6 +98,28 @@ fn main() {
                 String::from_utf8_lossy(&stderr)
             );
         }
+
+        //
+        // Generate file checksums
+        //
+
+        let mut file_checksums: json::map::Map<String, json::Value> = Default::default();
+        generate_file_checksums(
+            &package_vendor_dir,
+            PathBuf::from(&package_vendor_dir).as_ref(),
+            &mut file_checksums,
+        );
+
+        let mut json_map = json::map::Map::new();
+        json_map.insert("files".to_owned(), json::Value::Object(file_checksums));
+        json_map.insert(
+            "package".to_owned(),
+            json::Value::String(tarball_checksum.to_owned()),
+        );
+
+        let mut checksum_file =
+            std::fs::File::create(format!("{}/.cargo-checksum.json", package_vendor_dir)).unwrap();
+        json::ser::to_writer_pretty(&mut checksum_file, &json_map).unwrap();
     }
 }
 
@@ -139,4 +164,68 @@ fn cargo_lock_deps(lock_file_path: &str) -> Vec<Dep> {
     }
 
     deps
+}
+
+static IGNORED_FILES: [&str; 7] = [
+    ".",
+    "..",
+    ".gitattributes",
+    ".gitignore",
+    ".cargo-ok",
+    ".cargo-checksum.json",
+    ".cargo_vcs_info.json",
+];
+
+fn generate_file_checksums(
+    root: &str,
+    dir: &Path,
+    file_checksums: &mut json::map::Map<String, json::Value>,
+) {
+    for entry in std::fs::read_dir(dir).unwrap() {
+        let entry = entry.unwrap();
+        let file_name = entry.file_name();
+
+        if IGNORED_FILES
+            .iter()
+            .any(|ignored_file| *ignored_file == file_name)
+        {
+            continue;
+        }
+
+        match entry.file_type() {
+            Err(err) => {
+                eprintln!(
+                    "Error while getting type of file {:?}: {:?}",
+                    file_name, err
+                );
+            }
+            Ok(file_type) => {
+                if file_type.is_dir() {
+                    let mut dir_path = PathBuf::new();
+                    dir_path.push(dir);
+                    dir_path.push(entry.file_name());
+                    generate_file_checksums(root, &dir_path, file_checksums);
+                } else {
+                    let mut file_path = PathBuf::new();
+                    file_path.push(dir);
+                    file_path.push(entry.file_name());
+
+                    let rel_file_path = file_path.strip_prefix(root).unwrap();
+
+                    let file_contents = std::fs::read(&file_path).unwrap();
+
+                    let mut hasher = Sha256::new();
+                    hasher.update(&file_contents);
+                    let hash = hasher.finalize();
+                    let hash_str = format!("{:x}", hash);
+
+                    let old = file_checksums.insert(
+                        rel_file_path.to_string_lossy().to_string(),
+                        json::Value::String(hash_str),
+                    );
+                    assert!(old.is_none());
+                }
+            }
+        }
+    }
 }
