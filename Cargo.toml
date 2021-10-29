@@ -5,16 +5,12 @@ authors = ["Ömer Sinan Ağacan <omeragacan@gmail.com>"]
 edition = "2021"
 
 [[bin]]
-name = "cargo-compute-checksum"
-path = "src/compute_checksum.rs"
+name = "cargo-compute-checksums"
+path = "src/compute_checksums.rs"
 
 [[bin]]
 name = "cargo-list-lock"
 path = "src/list_lock.rs"
-
-[[bin]]
-name = "cargo-merge-lock"
-path = "src/merge_lock.rs"
 
 [dependencies]
 clap = "2.33.3"

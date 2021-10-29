@@ -5,7 +5,7 @@ use serde_json as json;
 use sha2::{Digest, Sha256};
 
 fn main() {
-    let args = App::new("cargo-compute-checksum")
+    let args = App::new("cargo-compute-checksums")
         .arg(
             Arg::with_name("dir")
                 .value_name("DIR")
