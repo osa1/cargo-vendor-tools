@@ -4,8 +4,15 @@ use clap::{App, Arg};
 use serde_json as json;
 use sha2::{Digest, Sha256};
 
+static DESCR: &str = "
+Given a directory path for a manually-vendored Cargo package, and checksum of the package's tarball
+(both of which can be obtained from `cargo-list-lock`), this program prints contents of
+`.cargo-checksum.json` for the package.
+";
+
 fn main() {
     let args = App::new("cargo-compute-checksums")
+        .long_about(DESCR)
         .arg(
             Arg::with_name("dir")
                 .value_name("DIR")

@@ -1,7 +1,19 @@
 use clap::{App, Arg};
 
+static DESCR: &str = "
+Given a Cargo.lock path, this program generates lines in form
+
+    <crates.io download URL> <package name>-<package version> <expected tarball checksum>
+
+You can then split these lines into (URL, dir name, checksum) triplets with something like bash's
+`read` with `read url name checksum`, and manually vendor this package by fetching the tarball with
+`wget` or `curl`, unpacking it to directory `name`, and use write `checksum` to the
+`.cargo-checksum.json` or the vendored package.
+";
+
 fn main() {
     let args = App::new("cargo-list-lock")
+        .long_about(DESCR)
         .arg(
             Arg::with_name("lock_file_path")
                 .value_name("LOCK_FILE_PATH")
